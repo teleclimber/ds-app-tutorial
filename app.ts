@@ -1,6 +1,5 @@
-import createApp from 'https://deno.land/x/dropserver_app@v0.1.1/mod.ts';
-import RoutesBuilder, {AuthAllow, Context} from 'https://deno.land/x/dropserver_app@v0.1.1/approutes.ts';
-import MigrationsBuilder from 'https://deno.land/x/dropserver_app@v0.1.1/migrations.ts';
+import {createApp, MigrationsBuilder, RoutesBuilder, AuthAllow, Context} from 'https://deno.land/x/dropserver_app@v0.2.0/mod.ts';
+import { Html5Entities } from "https://deno.land/x/html_entities@v1.0/mod.js";
 
 const m = new MigrationsBuilder;
 // create a migration from schema 0 to 1:
@@ -21,12 +20,10 @@ async function helloWorld(ctx:Context) {
 
 	const user = await app.getUser(ctx.proxyId);
 	await Deno.writeFile(app.appspacePath('visitors.txt'), new TextEncoder().encode(user.displayName+'\n'), {append:true});
-	const html = `
-	<h1>Hello ${user.displayName}</h1>
-	<img src="avatars/${user.avatar}">
-	<pre>${visitors}</pre>
-	`;
-	ctx.req.respond({body:html});
+	const html = `<h1>Hello ${Html5Entities.encode(user.displayName)}</h1>
+		<img src="avatars/${user.avatar}">
+		<ul>${visitors.split("\n").map(v => '<li>'+Html5Entities.encode(v)+'</li>').join('')}</ul>`;
+	ctx.respondWith(new Response(html, {headers: new Headers({'Content-Type': 'text/html'})}));
 }
 
 const r = new RoutesBuilder;
